@@ -1,0 +1,1 @@
+<form method="post"><h1>Reset Password</h1><?= csrf_field() ?><input type="hidden" name="token" value="<?= e($token) ?>"><?php if(!empty($error)): ?><p><?= e($error) ?></p><?php endif; ?><input type="password" name="password" required><input type="password" name="confirm_password" required><button>Update password</button></form>

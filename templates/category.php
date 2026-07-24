@@ -1,0 +1,1 @@
+<h1><?= e($cat['name']) ?></h1><p><?= e($cat['description']) ?></p><?php foreach($posts as $post): ?><article class="card"><h2><a href="<?= e(url('post/'.$post['slug'])) ?>"><?= e($post['title']) ?></a></h2><p><?= e($post['short_description']) ?></p></article><?php endforeach; ?>

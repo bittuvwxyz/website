@@ -1,0 +1,1 @@
+<h1>Search</h1><form><input name="q" value="<?= e($q) ?>"><button>Search</button></form><?php foreach($posts as $post): ?><article class="card"><h2><a href="<?= e(url('post/'.$post['slug'])) ?>"><?= e($post['title']) ?></a></h2></article><?php endforeach; ?>

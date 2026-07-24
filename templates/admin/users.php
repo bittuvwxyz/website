@@ -1,0 +1,1 @@
+<h1>Users</h1><?php foreach($users as $u): ?><div class="card"><strong><?= e($u['username']) ?></strong> <?= e($u['email']) ?> — <?= e($u['role']) ?> — <?= e($u['status']) ?></div><?php endforeach; ?>
