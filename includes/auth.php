@@ -1,0 +1,14 @@
+<?php
+declare(strict_types=1);
+
+function start_secure_session(array $config): void { session_set_cookie_params(['lifetime'=>0,'path'=>'/','domain'=>'','secure'=>$config['security']['https_only'],'httponly'=>true,'samesite'=>'Lax']); session_start(); if(!isset($_SESSION['created'])){session_regenerate_id(true);$_SESSION['created']=time();} if(time()-($_SESSION['last_activity']??time())>$config['session_lifetime']){session_unset();session_destroy();session_start();} $_SESSION['last_activity']=time(); }
+function current_user(): ?array { static $u=false; if($u!==false)return $u; $id=$_SESSION['user_id']??0; return $u=$id?db_one('SELECT u.*, r.name role_name FROM users u JOIN roles r ON r.id=u.role_id WHERE u.id=?','i',[$id]):null; }
+function is_logged_in(): bool { return current_user() !== null; }
+function has_role(array|string $roles): bool { $u=current_user(); return $u && in_array($u['role_name'], (array)$roles, true); }
+function require_login(): void { if(!is_logged_in()) redirect('login'); }
+function require_role(array|string $roles): void { require_login(); if(!has_role($roles)) error_page(403,'Forbidden','You do not have permission to access this page.'); }
+function password_ok(string $p): bool { return strlen($p)>=8 && preg_match('/[A-Z]/',$p) && preg_match('/[a-z]/',$p) && preg_match('/\d/',$p); }
+function login_user(array $user): void { session_regenerate_id(true); $_SESSION['user_id']=(int)$user['id']; db_exec('UPDATE users SET last_login=NOW(), failed_login_count=0, locked_until=NULL WHERE id=?','i',[(int)$user['id']]); db_exec('INSERT INTO sessions (user_id, session_id, ip_address, user_agent, created_at, expires_at) VALUES (?,?,?,?,NOW(),DATE_ADD(NOW(), INTERVAL ? SECOND))','isssi',[(int)$user['id'],session_id(),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'',config('session_lifetime')]); log_activity((int)$user['id'],'login','Successful login'); }
+function logout_user(): void { $id=$_SESSION['user_id']??null; if($id) { db_exec('DELETE FROM sessions WHERE session_id=?','s',[session_id()]); log_activity((int)$id,'logout','User logged out'); } $_SESSION=[]; if(ini_get('session.use_cookies')){ $p=session_get_cookie_params(); setcookie(session_name(),'',time()-42000,$p['path'],$p['domain'],$p['secure'],$p['httponly']); } session_destroy(); }
+function login_rate_limited(string $email): bool { $ip=$_SERVER['REMOTE_ADDR']??''; $row=db_one('SELECT COUNT(*) c FROM login_attempts WHERE (email=? OR ip_address=?) AND success=0 AND created_at > DATE_SUB(NOW(), INTERVAL ? SECOND)','ssi',[$email,$ip,config('security.login_window')]); return (int)($row['c']??0)>=config('security.login_max_attempts'); }
+function record_login_attempt(string $email, bool $success): void { db_exec('INSERT INTO login_attempts (email, ip_address, success, created_at) VALUES (?,?,?,NOW())','ssi',[$email,$_SERVER['REMOTE_ADDR']??'', $success?1:0]); }
