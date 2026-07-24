@@ -1,0 +1,1 @@
+</main><footer><p>&copy; <?= date('Y') ?> <?= e(config('site_name')) ?></p></footer><script src="<?= e(url('assets/js/app.js')) ?>"></script></body></html>

@@ -1,0 +1,1 @@
+<section class="card"><h1><?= (int)$code ?> <?= e($title) ?></h1><p><?= e($message) ?></p></section>
