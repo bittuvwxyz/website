@@ -41,3 +41,4 @@
     });
   });
 })();
+document.addEventListener('submit',e=>{const p=e.target.querySelector('input[name=password]');if(p&&p.value.length>0&&p.value.length<8){alert('Password must be at least 8 characters.');e.preventDefault();}});
